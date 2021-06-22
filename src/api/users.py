@@ -14,14 +14,22 @@ class UsersList(Resource):
     post_data = request.get_json()
     username = post_data.get("username")
     email = post_data.get("email")
+    response_object = {}
+
+    user = User.query.filter_by(email=email).first()
+    if user:
+      response_object["message"] = "Sorry. That email already exists."
+      return response_object, 400
 
     db.session.add(User(username=username, email=email))
-    db.session.commit()
+    
+    try:
+      db.session.commit()
 
-    response_object = {
-      "message": f"{email} was added!"
-    }
-
-    return response_object, 201
+      response_object["message"] = f"{email} was added!"
+      return response_object, 201
+    
+    except:
+      db.session.rollback()
 
 api.add_resource(UsersList, "/users")
