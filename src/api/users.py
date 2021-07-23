@@ -7,12 +7,15 @@ from src.api.models import User
 users_blueprint = Blueprint("users", __name__)
 api = Api(users_blueprint)
 
-user = api.model("User", {
-  "id": fields.Integer(readOnly=True),
-  "username": fields.String(required=True),
-  "email": fields.String(required=True),
-  "created_date": fields.DateTime,
-})
+user = api.model(
+    "User",
+    {
+        "id": fields.Integer(readOnly=True),
+        "username": fields.String(required=True),
+        "email": fields.String(required=True),
+        "created_date": fields.DateTime,
+    },
+)
 
 
 class UsersList(Resource):
@@ -40,7 +43,6 @@ class UsersList(Resource):
 
 
 class Users(Resource):
-
     @api.marshal_with(user)
     def get(self, user_id):
         user = User.query.filter_by(id=user_id).first()
