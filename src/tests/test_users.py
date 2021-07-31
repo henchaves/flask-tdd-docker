@@ -1,4 +1,5 @@
 import json
+
 import pytest
 
 from src.api.models import User
@@ -136,18 +137,41 @@ def test_update_user(test_app, test_database, add_user):
     assert "me@testdriven.io" in data["email"]
 
 
-@pytest.mark.parametrize("user_id, payload, status_code, message", [
-    [1, {}, 400, "Input payload validation failed"],
-    [1, {"email": "me@testdriven.io"}, 400, "Input payload validation failed"],
-    [999, {"username": "me", "email": "me@testdriven.io"}, 404, "User 999 does not exist"],
-])
-def test_update_user_invalid(test_app, test_database, user_id, payload, status_code, message):
+@pytest.mark.parametrize(
+    "user_id, payload, status_code, message",
+    [
+        [1, {}, 400, "Input payload validation failed"],
+        [1, {"email": "me@testdriven.io"}, 400, "Input payload validation failed"],
+        [
+            999,
+            {"username": "me", "email": "me@testdriven.io"},
+            404,
+            "User 999 does not exist",
+        ],
+    ],
+)
+def test_update_user_invalid(
+    test_app, test_database, user_id, payload, status_code, message
+):
     client = test_app.test_client()
     resp = client.put(
-        f"/users/{user_id}",
-        data=json.dumps(payload),
-        content_type="application/json"
+        f"/users/{user_id}", data=json.dumps(payload), content_type="application/json"
     )
     data = json.loads(resp.data.decode())
     assert resp.status_code == status_code
     assert message in data["message"]
+
+
+def test_update_user_duplicate_email(test_app, test_database, add_user):
+    add_user("hajek", "rob@hajek.org")
+    user = add_user("rob", "rob@notreal.com")
+
+    client = test_app.test_client()
+    resp = client.put(
+        f"/users/{user.id}",
+        data=json.dumps({"username": "rob", "email": "rob@hajek.org"}),
+        content_type="application/json",
+    )
+    data = json.loads(resp.data.decode())
+    assert resp.status_code == 400
+    assert "Sorry. That email already exists." in data["message"]
