@@ -1,4 +1,5 @@
 import json
+
 # from datetime import datetime
 
 import pytest
@@ -20,7 +21,7 @@ def test_add_user(test_app, monkeypatch):
     resp = client.post(
         "/users",
         data=json.dumps({"username": "michael", "email": "michael@testdriven.io"}),
-        content_type="application/json"
+        content_type="application/json",
     )
     data = json.loads(resp.data.decode())
     assert resp.status_code == 201
@@ -96,7 +97,9 @@ def test_update_user(test_app, monkeypatch):
         ],
     ],
 )
-def test_update_user_invalid(test_app, monkeypatch, user_id, payload, status_code, message):
+def test_update_user_invalid(
+    test_app, monkeypatch, user_id, payload, status_code, message
+):
     pass
 
 

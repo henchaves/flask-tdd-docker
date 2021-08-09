@@ -8,7 +8,7 @@ from src.api.crud import (  # isort:skip
     add_user,
     get_user_by_id,
     update_user,
-    delete_user
+    delete_user,
 )
 
 users_blueprint = Blueprint("users", __name__)
