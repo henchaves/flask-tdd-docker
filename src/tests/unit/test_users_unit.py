@@ -160,7 +160,39 @@ def test_remove_user_incorrect_id(test_app, monkeypatch):
 
 
 def test_update_user(test_app, monkeypatch):
-    pass
+    class AttrDict(dict):
+        def __init__(self, *args, **kwargs):
+            super(AttrDict, self).__init__(*args, **kwargs)
+            self.__dict__ = self
+
+    def mock_get_user_by_id(user_id):
+        d = AttrDict()
+        d.update({"id": 1, "username": "me", "email": "me@testdriven.io"})
+        return d
+
+    def mock_update_user(user, username, email):
+        return True
+
+    def mock_get_user_by_email(email):
+        return None
+
+    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(src.api.users, "get_user_by_email", mock_get_user_by_email)
+    monkeypatch.setattr(src.api.users, "update_user", mock_update_user)
+    client = test_app.test_client()
+    resp_one = client.put(
+        "/users/1",
+        data=json.dumps({"username": "me", "email": "me@testdriven.io"}),
+        content_type="application/json",
+    )
+    data = json.loads(resp_one.data.decode())
+    assert resp_one.status_code == 200
+    assert "1 was updated!" in data["message"]
+    resp_two = client.get("/users/1")
+    data = json.loads(resp_two.data.decode())
+    assert resp_two.status_code == 200
+    assert "me" in data["username"]
+    assert "me@testdriven.io" in data["email"]
 
 
 @pytest.mark.parametrize(
@@ -179,8 +211,45 @@ def test_update_user(test_app, monkeypatch):
 def test_update_user_invalid(
     test_app, monkeypatch, user_id, payload, status_code, message
 ):
-    pass
+    def mock_get_user_by_id(user_id):
+        return None
+
+    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    client = test_app.test_client()
+    resp = client.put(
+        f"/users/{user_id}", data=json.dumps(payload), content_type="application/json"
+    )
+    data = json.loads(resp.data.decode())
+    assert resp.status_code == status_code
+    assert message in data["message"]
 
 
 def test_update_user_duplicate_email(test_app, monkeypatch):
-    pass
+    class AttrDict(dict):
+        def __init__(self, *args, **kwargs):
+            super(AttrDict, self).__init__(*args, **kwargs)
+            self.__dict__ = self
+
+    def mock_get_user_by_id(user_id):
+        d = AttrDict()
+        d.update({"id": 1, "username": "me", "email": "me@testdriven.io"})
+        return d
+
+    def mock_update_user(user, username, email):
+        return True
+
+    def mock_get_user_by_email(email):
+        return True
+
+    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(src.api.users, "get_user_by_email", mock_get_user_by_email)
+    monkeypatch.setattr(src.api.users, "update_user", mock_update_user)
+    client = test_app.test_client()
+    resp = client.put(
+        "/users/1",
+        data=json.dumps({"username": "me", "email": "me@testdriven.io"}),
+        content_type="application/json",
+    )
+    data = json.loads(resp.data.decode())
+    assert resp.status_code == 400
+    assert "Sorry. That email already exists." in data["message"]
