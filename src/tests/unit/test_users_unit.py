@@ -1,12 +1,9 @@
 import json
+from datetime import datetime
 
 import pytest
 
 import src.api.users
-
-# from datetime import datetime
-
-
 
 
 def test_add_user(test_app, monkeypatch):
@@ -63,15 +60,62 @@ def test_add_user_duplicate_email(test_app, monkeypatch):
 
 
 def test_single_user(test_app, monkeypatch):
-    pass
+    def mock_get_user_by_id(user_id):
+        return {
+            "id": 1,
+            "username": "jeffrey",
+            "email": "jeffrey@testdriven.io",
+            "created_date": datetime.now(),
+        }
+
+    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    client = test_app.test_client()
+    resp = client.get("/users/1")
+    data = json.loads(resp.data.decode())
+    assert resp.status_code == 200
+    assert "jeffrey" in data["username"]
+    assert "jeffrey@testdriven.io" in data["email"]
 
 
 def test_single_user_incorrect_id(test_app, monkeypatch):
-    pass
+    def mock_get_user_by_id(user_id):
+        return None
+
+    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    client = test_app.test_client()
+    resp = client.get("/users/999")
+    data = json.loads(resp.data.decode())
+    assert resp.status_code == 404
+    assert "User 999 does not exist" in data["message"]
 
 
 def test_all_users(test_app, monkeypatch):
-    pass
+    def mock_get_all_users():
+        return [
+            {
+                "id": 1,
+                "username": "michael",
+                "email": "michael@mherman.org",
+                "created_date": datetime.now(),
+            },
+            {
+                "id": 1,
+                "username": "fletcher",
+                "email": "fletcher@notreal.com",
+                "created_dated": datetime.now(),
+            },
+        ]
+
+    monkeypatch.setattr(src.api.users, "get_all_users", mock_get_all_users)
+    client = test_app.test_client()
+    resp = client.get("/users")
+    data = json.loads(resp.data.decode())
+    assert resp.status_code == 200
+    assert len(data) == 2
+    assert "michael" in data[0]["username"]
+    assert "michael@mherman.org" in data[0]["email"]
+    assert "fletcher" in data[1]["username"]
+    assert "fletcher@notreal.com" in data[1]["email"]
 
 
 def test_remove_user(test_app, monkeypatch):
