@@ -1,3 +1,38 @@
+###########
+# BUILDER #
+###########
+
+# pull official base image
+FROM python:3.9.5-slim-buster as builder
+
+# set working directory
+WORKDIR /usr/src/app
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# install system dependencies
+RUN apt-get update \
+  && apt-get -y install gcc postgresql \
+  && apt-get clean
+
+# add and install requirements
+RUN pip install --upgrade pip
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
+
+#lint
+COPY . .
+RUN pip install black==21.5b1 flake8==3.9.2 isort==5.8.0
+RUN flake8 src
+RUN black src --check
+RUN isort src --check-only
+
+#########
+# FINAL #
+#########
+
 # pull official base image
 FROM python:3.9.5-slim-buster
 
@@ -12,12 +47,14 @@ ENV APP_SETTINGS src.config.ProductionConfig
 
 # install system dependencies
 RUN apt-get update \
-  && apt-get -y install netcat gcc postgresql \
+  && apt-get -y install gcc postgresql \
   && apt-get clean
 
-# add and install requirements
-COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+# install dependencies
+COPY --from=builder /usr/src/app/wheels /wheels
+COPY --from=builder /usr/src/app/requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache /wheels/*
 
 # add app
 COPY . .
