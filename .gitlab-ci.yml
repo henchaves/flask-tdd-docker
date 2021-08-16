@@ -35,6 +35,10 @@ test:
     POSTGRES_PASSWORD: runner
     DATABASE_TEST_URL: postgresql://runner:runner@postgres:5432/users
   script:
+    - python3.9 -m venv env
+    - source env/bin/activate
+    - pip install -r requirements.txt
+    - pip install black==21.5b1 flake8==3.9.2 isort==5.8.0 pytest==6.2.4
     - pytest "src/tests" -p no:warnings
     - flake8 src
     - black src --check
