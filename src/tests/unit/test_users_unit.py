@@ -3,7 +3,7 @@ from datetime import datetime
 
 import pytest
 
-import src.api.users
+import src.api.users.views
 
 
 def test_add_user(test_app, monkeypatch):
@@ -13,8 +13,10 @@ def test_add_user(test_app, monkeypatch):
     def mock_add_user(username, email):
         return True
 
-    monkeypatch.setattr(src.api.users, "get_user_by_email", mock_get_user_by_email)
-    monkeypatch.setattr(src.api.users, "add_user", mock_add_user)
+    monkeypatch.setattr(
+        src.api.users.views, "get_user_by_email", mock_get_user_by_email
+    )
+    monkeypatch.setattr(src.api.users.views, "add_user", mock_add_user)
 
     client = test_app.test_client()
     resp = client.post(
@@ -46,8 +48,10 @@ def test_add_user_duplicate_email(test_app, monkeypatch):
     def mock_add_user(username, email):
         return True
 
-    monkeypatch.setattr(src.api.users, "get_user_by_email", mock_get_user_by_email)
-    monkeypatch.setattr(src.api.users, "add_user", mock_add_user)
+    monkeypatch.setattr(
+        src.api.users.views, "get_user_by_email", mock_get_user_by_email
+    )
+    monkeypatch.setattr(src.api.users.views, "add_user", mock_add_user)
     client = test_app.test_client()
     resp = client.post(
         "/users",
@@ -68,7 +72,7 @@ def test_single_user(test_app, monkeypatch):
             "created_date": datetime.now(),
         }
 
-    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(src.api.users.views, "get_user_by_id", mock_get_user_by_id)
     client = test_app.test_client()
     resp = client.get("/users/1")
     data = json.loads(resp.data.decode())
@@ -81,7 +85,7 @@ def test_single_user_incorrect_id(test_app, monkeypatch):
     def mock_get_user_by_id(user_id):
         return None
 
-    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(src.api.users.views, "get_user_by_id", mock_get_user_by_id)
     client = test_app.test_client()
     resp = client.get("/users/999")
     data = json.loads(resp.data.decode())
@@ -106,7 +110,7 @@ def test_all_users(test_app, monkeypatch):
             },
         ]
 
-    monkeypatch.setattr(src.api.users, "get_all_users", mock_get_all_users)
+    monkeypatch.setattr(src.api.users.views, "get_all_users", mock_get_all_users)
     client = test_app.test_client()
     resp = client.get("/users")
     data = json.loads(resp.data.decode())
@@ -138,8 +142,8 @@ def test_remove_user(test_app, monkeypatch):
     def mock_delete_user(user):
         return True
 
-    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
-    monkeypatch.setattr(src.api.users, "delete_user", mock_delete_user)
+    monkeypatch.setattr(src.api.users.views, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(src.api.users.views, "delete_user", mock_delete_user)
     client = test_app.test_client()
     resp_two = client.delete("/users/1")
     data = json.loads(resp_two.data.decode())
@@ -151,7 +155,7 @@ def test_remove_user_incorrect_id(test_app, monkeypatch):
     def mock_get_user_by_id(user_id):
         return None
 
-    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(src.api.users.views, "get_user_by_id", mock_get_user_by_id)
     client = test_app.test_client()
     resp = client.delete("/users/999")
     data = json.loads(resp.data.decode())
@@ -176,9 +180,11 @@ def test_update_user(test_app, monkeypatch):
     def mock_get_user_by_email(email):
         return None
 
-    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
-    monkeypatch.setattr(src.api.users, "get_user_by_email", mock_get_user_by_email)
-    monkeypatch.setattr(src.api.users, "update_user", mock_update_user)
+    monkeypatch.setattr(src.api.users.views, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(
+        src.api.users.views, "get_user_by_email", mock_get_user_by_email
+    )
+    monkeypatch.setattr(src.api.users.views, "update_user", mock_update_user)
     client = test_app.test_client()
     resp_one = client.put(
         "/users/1",
@@ -214,7 +220,7 @@ def test_update_user_invalid(
     def mock_get_user_by_id(user_id):
         return None
 
-    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(src.api.users.views, "get_user_by_id", mock_get_user_by_id)
     client = test_app.test_client()
     resp = client.put(
         f"/users/{user_id}", data=json.dumps(payload), content_type="application/json"
@@ -241,9 +247,11 @@ def test_update_user_duplicate_email(test_app, monkeypatch):
     def mock_get_user_by_email(email):
         return True
 
-    monkeypatch.setattr(src.api.users, "get_user_by_id", mock_get_user_by_id)
-    monkeypatch.setattr(src.api.users, "get_user_by_email", mock_get_user_by_email)
-    monkeypatch.setattr(src.api.users, "update_user", mock_update_user)
+    monkeypatch.setattr(src.api.users.views, "get_user_by_id", mock_get_user_by_id)
+    monkeypatch.setattr(
+        src.api.users.views, "get_user_by_email", mock_get_user_by_email
+    )
+    monkeypatch.setattr(src.api.users.views, "update_user", mock_update_user)
     client = test_app.test_client()
     resp = client.put(
         "/users/1",
