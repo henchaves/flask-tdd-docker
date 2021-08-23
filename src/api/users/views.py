@@ -1,5 +1,5 @@
-from flask import Blueprint, request
-from flask_restx import Api, Resource, fields
+from flask import request
+from flask_restx import Namespace, Resource, fields
 
 from src.api.users.crud import (  # isort:skip
     get_all_users,
@@ -10,10 +10,9 @@ from src.api.users.crud import (  # isort:skip
     delete_user,
 )
 
-users_blueprint = Blueprint("users", __name__)
-api = Api(users_blueprint)
+users_namespace = Namespace("users")
 
-user = api.model(
+user = users_namespace.model(
     "User",
     {
         "id": fields.Integer(readOnly=True),
@@ -25,7 +24,7 @@ user = api.model(
 
 
 class UsersList(Resource):
-    @api.expect(user, validate=True)
+    @users_namespace.expect(user, validate=True)
     def post(self):
         post_data = request.get_json()
         username = post_data.get("username")
@@ -42,17 +41,17 @@ class UsersList(Resource):
         response_object["message"] = f"{email} was added!"
         return response_object, 201
 
-    @api.marshal_with(user, as_list=True)
+    @users_namespace.marshal_with(user, as_list=True)
     def get(self):
         return get_all_users(), 200
 
 
 class Users(Resource):
-    @api.marshal_with(user)
+    @users_namespace.marshal_with(user)
     def get(self, user_id):
         user = get_user_by_id(user_id)
         if not user:
-            api.abort(404, f"User {user_id} does not exist")
+            users_namespace.abort(404, f"User {user_id} does not exist")
         return user, 200
 
     def delete(self, user_id):
@@ -60,14 +59,14 @@ class Users(Resource):
         user = get_user_by_id(user_id)
 
         if not user:
-            api.abort(404, f"User {user_id} does not exist")
+            users_namespace.abort(404, f"User {user_id} does not exist")
 
         delete_user(user)
 
         response_object["message"] = f"{user.email} was removed!"
         return response_object, 200
 
-    @api.expect(user, validate=True)
+    @users_namespace.expect(user, validate=True)
     def put(self, user_id):
         post_data = request.get_json()
         username = post_data.get("username")
@@ -76,7 +75,7 @@ class Users(Resource):
 
         user = get_user_by_id(user_id)
         if not user:
-            api.abort(404, f"User {user_id} does not exist")
+            users_namespace.abort(404, f"User {user_id} does not exist")
 
         if get_user_by_email(email):
             response_object["message"] = "Sorry. That email already exists."
@@ -88,5 +87,5 @@ class Users(Resource):
         return response_object, 200
 
 
-api.add_resource(UsersList, "/users")
-api.add_resource(Users, "/users/<int:user_id>")
+users_namespace.add_resource(UsersList, "")
+users_namespace.add_resource(Users, "/<int:user_id>")
